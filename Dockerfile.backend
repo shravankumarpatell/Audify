@@ -1,17 +1,26 @@
-# Use an official Python 3.10 image
+# Use Python 3.10 base image
 FROM python:3.10-slim
 
-# Set a working directory
+# Install OS‑level build tools for pesq
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      gcc \
+      python3-dev \
+      libsndfile1 \
+      git && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy only backend code & requirements
+# Copy and install backend dependencies
 COPY backend/requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy backend code
 COPY backend/ backend/
 
-# Expose port (matches uvicorn --port)
+# Expose port and launch
 EXPOSE 8000
-
-# Entrypoint
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
