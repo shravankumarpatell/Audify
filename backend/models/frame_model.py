@@ -1,13 +1,21 @@
+import os
+import io
+import json
+
 import numpy as np
 import matplotlib.pyplot as plt
-from tensorflow.keras.models import Sequential
+import librosa
+import soundfile as sf
+
+from tensorflow.keras.models import Sequential, load_model as _load_model
 from tensorflow.keras.layers import Dense, Input
+
 from ..data.features import extract_features, butter_lowpass_filter, HOP_LENGTH, WINDOW_TYPE, SR
 from ..metrics.quality import segmental_snr, compute_pesq, compute_stoi
-import soundfile as sf
-import os
-import librosa
-import io
+
+# Paths for saving/loading
+MODEL_PATH = "backend/models/frame_model.keras"      # Using .keras format
+STATS_PATH = "backend/models/norm_stats.json"
 
 
 def build_frame_model(input_dim: int) -> Sequential:
@@ -16,10 +24,10 @@ def build_frame_model(input_dim: int) -> Sequential:
     """
     model = Sequential([
         Input(shape=(input_dim,)),
-        Dense(1024, activation='relu'),
-        Dense(input_dim, activation='linear')
+        Dense(1024, activation="relu"),
+        Dense(input_dim, activation="linear")
     ])
-    model.compile(optimizer='adam', loss='mse')
+    model.compile(optimizer="adam", loss="mse")
     return model
 
 
@@ -29,7 +37,6 @@ def prepare_data(clean_path: str, noisy_path: str):
     Returns normalized X, Y, and normalization stats.
     """
     X_frames, Y_frames = [], []
-
     for fname in os.listdir(clean_path):
         clean_file = os.path.join(clean_path, fname)
         noisy_file = os.path.join(noisy_path, fname)
@@ -52,29 +59,31 @@ def prepare_data(clean_path: str, noisy_path: str):
 def train_model(clean_path: str, noisy_path: str, epochs: int = 10, batch_size: int = 32):
     """
     Train frame model on the given dataset.
-    Returns trained model and normalization stats.
+    Saves the trained model + stats before returning.
     """
     X, Y, mean, std = prepare_data(clean_path, noisy_path)
     model = build_frame_model(X.shape[1])
     history = model.fit(X, Y, epochs=epochs, batch_size=batch_size)
 
-    # Plot training loss
+    # Plot training loss (optional)
     plt.figure()
-    plt.plot(history.history['loss'], label='Training Loss')
-    plt.title('Model Loss Over Epochs')
-    plt.xlabel('Epoch')
-    plt.ylabel('MSE Loss')
+    plt.plot(history.history["loss"], label="Training Loss")
+    plt.title("Model Loss Over Epochs")
+    plt.xlabel("Epoch")
+    plt.ylabel("MSE Loss")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
     plt.show()
 
+    # Save trained artifacts
+    save_trained_model(model, mean, std)
     return model, mean, std
 
 
 def enhance_audio(model, noisy_file: str, mean: float, std: float,
                   output_path: str = None,
-                  output_buffer: 'io.BytesIO' = None):
+                  output_buffer: io.BytesIO = None):
     """
     Enhance a single noisy audio file, save output, and report metrics.
     """
@@ -90,10 +99,39 @@ def enhance_audio(model, noisy_file: str, mean: float, std: float,
     enhanced = librosa.istft(enhanced_stft, hop_length=HOP_LENGTH, window=WINDOW_TYPE)
     enhanced = butter_lowpass_filter(enhanced, cutoff=4000, sr=SR)
 
-    # Output: write to file or buffer
+    # Output to file or in-memory buffer
     if output_path:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         sf.write(output_path, enhanced, SR)
     if output_buffer is not None:
-        # Write WAV data into BytesIO buffer
-        sf.write(output_buffer, enhanced, SR, format='WAV')
+        sf.write(output_buffer, enhanced, SR, format="WAV")
+
+    # Print metrics
+    seg = segmental_snr(y_noisy, enhanced)
+    p = compute_pesq(y_noisy, enhanced)
+    s = compute_stoi(y_noisy, enhanced)
+    print(f"Segmental SNR: {seg:.2f} dB, PESQ: {p:.2f}, STOI: {s:.2f}")
+
+
+def save_trained_model(model, mean, std):
+    """
+    Save model (in native Keras format) and normalization stats (JSON).
+    """
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+    # Save in the recommended Keras format
+    model.save(MODEL_PATH)  
+    # Cast mean/std to Python floats so JSON can serialize them
+    stats = {"mean": float(mean), "std": float(std)}
+    with open(STATS_PATH, "w") as f:
+        json.dump(stats, f)
+
+
+def load_trained_model():
+    """
+    Load model and stats if they exist, else return (None, None, None).
+    """
+    if os.path.exists(MODEL_PATH) and os.path.exists(STATS_PATH):
+        model = _load_model(MODEL_PATH)
+        stats = json.load(open(STATS_PATH))
+        return model, stats["mean"], stats["std"]
+    return None, None, None
