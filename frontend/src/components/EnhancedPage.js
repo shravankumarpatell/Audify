@@ -21,7 +21,7 @@ export default function EnhancedPage() {
         form.append('file', file);
       }
 
-      const resp = await fetch('http://localhost:8000/enhance', {
+      const resp = await fetch('https://audify-backend-ktwu.onrender.com', {
         method: 'POST',
         body: form,
       });
