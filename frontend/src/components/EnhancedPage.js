@@ -35,7 +35,7 @@ export default function EnhancedPage() {
         setEnhancedUrl(URL.createObjectURL(blob));
       } catch (err) {
         console.error('Enhancement failed:', err);
-        alert('Could not reach enhancement service. Make sure the backend URL is correct.');
+        alert('Could not reach enhancement service. Please check CORS and endpoint URL.');
       }
     };
     uploadAndEnhance();

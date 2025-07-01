@@ -11,33 +11,36 @@ from backend.models.frame_model import (
 
 app = FastAPI()
 
-# CORS
+# CORS: allow your deployed frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://audify-gql7.onrender.com/",            # your deployed frontend
-    "https://audify-backend-ktwu.onrender.com"],  # change in production to your frontend domain
+    allow_origins=[
+        "https://audify-gql7.onrender.com",  # frontend URL
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load pre‑trained model and stats
+@app.get("/")
+async def root():
+    return {"status": "Audify backend up"}
+
+# Load model on startup
 model, mean, std = load_trained_model()
 if model is None:
-    raise RuntimeError(
-        "No trained model found! Please run `python backend/train.py` first."
-    )
+    raise RuntimeError("No trained model found! Run 'python backend/train.py'.")
 
 @app.post("/enhance")
 async def enhance(file: UploadFile = File(...)):
-    # Read uploaded audio bytes
     data = await file.read()
     tmp_in = "temp_noisy.wav"
     with open(tmp_in, "wb") as f:
         f.write(data)
 
-    # Enhance into memory buffer
     buffer = io.BytesIO()
-    enhance_func(model, tmp_in, mean, std, output_buffer=buffer)
+    try:
+        enhance_func(model, tmp_in, mean, std, output_buffer=buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     buffer.seek(0)
-
     return StreamingResponse(buffer, media_type="audio/wav")
