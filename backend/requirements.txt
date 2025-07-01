@@ -1,0 +1,11 @@
+numpy
+librosa
+matplotlib
+soundfile
+scipy
+tensorflow
+pesq
+pystoi
+fastapi
+uvicorn
+python-multipart

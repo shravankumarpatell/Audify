@@ -1,0 +1,154 @@
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app-background {
+  background: linear-gradient(135deg, #538fd4, #070648);
+  min-height: 100vh;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.container {
+  margin-top: 3rem;
+  text-align: center;
+  width: 90%;
+  max-width: 600px;
+}
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Button group styling */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.upload-button,
+.enhance-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.upload-button {
+  background: #d24755;
+  color: #fff;
+}
+
+.upload-button:disabled {
+  background: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+.enhance-button {
+  background: #3ecc62;
+  color: #fff;
+}
+
+.sample-button {
+  background: #538fd4;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.enhance-button:disabled {
+  background: rgba(255,255,255,0.5);
+  cursor: not-allowed;
+}
+
+.sample-button:disabled {
+  background: rgba(255,255,255,0.5);
+  cursor: not-allowed;
+}
+
+.players {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 4rem;
+  margin-top: 2rem;
+}
+
+.player-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.audio-player {
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.waveform-container {
+  width: 100%;
+  max-width: 600px;
+}
+
+.header {
+  width: 100%;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  background: rgba(0,0,0,0.3);
+  position: sticky;
+  top: 0;
+}
+
+.logo {
+  height: 45px;
+
+  margin-left: 1rem;
+}
+
+.site-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.site-title {
+  font-size: 1.5rem;
+  flex-grow: 1;
+  padding-left:  1px;
+}
+
+.nav-link {
+  margin-left: 1rem;
+  font-weight: bold;
+  color: #fff;
+  text-decoration: none;
+}
+
+.nav-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #12a837;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-top: 2rem;
+}
+
+.nav-button:hover {
+  background: #99bedc;
+  color: #070648;
+}
