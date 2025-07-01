@@ -2,18 +2,19 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import Waveform from './Waveform';
 
+// Full endpoint including path
+const ENHANCE_ENDPOINT = 'https://audify-backend-ktwu.onrender.com/enhance';
+
 export default function EnhancedPage() {
-  const { originalUrl, file, useSample } = useLocation().state;
+  const { useSample, file, originalUrl } = useLocation().state;
   const [enhancedUrl, setEnhancedUrl] = useState(null);
   const origAudioRef = useRef(null);
   const enhAudioRef = useRef(null);
 
   useEffect(() => {
-    // always upload through backend, sample or user file
     const uploadAndEnhance = async () => {
       const form = new FormData();
       if (useSample) {
-        // fetch sample file as Blob and append
         const respSample = await fetch(originalUrl);
         const blobSample = await respSample.blob();
         form.append('file', blobSample, 'sample.wav');
@@ -21,38 +22,47 @@ export default function EnhancedPage() {
         form.append('file', file);
       }
 
-      const resp = await fetch('https://audify-backend-ktwu.onrender.com', {
-        method: 'POST',
-        body: form,
-      });
-      const blob = await resp.blob();
-      setEnhancedUrl(URL.createObjectURL(blob));
+      try {
+        const resp = await fetch(ENHANCE_ENDPOINT, {
+          method: 'POST',
+          body: form,
+        });
+        if (!resp.ok) {
+          console.error('Server responded with', resp.status);
+          throw new Error(`Enhance API error: ${resp.status}`);
+        }
+        const blob = await resp.blob();
+        setEnhancedUrl(URL.createObjectURL(blob));
+      } catch (err) {
+        console.error('Enhancement failed:', err);
+        alert('Could not reach enhancement service. Make sure the backend URL is correct.');
+      }
     };
     uploadAndEnhance();
-  }, [originalUrl, file, useSample]);
+  }, [useSample, file, originalUrl]);
 
   return (
     <div className="container">
       <h2 className="title">Enhanced Audio</h2>
-      {enhancedUrl ? (
-        <>
-          <div className="players">
-            <div className="player-block">
-              <h3>Original Audio</h3>
-              <audio controls src={originalUrl} ref={origAudioRef} className="audio-player" />
-              <Waveform audioRef={origAudioRef} />
-            </div>
+      {originalUrl && (
+        <div className="players">
+          <div className="player-block">
+            <h3>Original Audio</h3>
+            <audio controls src={originalUrl} ref={origAudioRef} className="audio-player" />
+            <Waveform audioRef={origAudioRef} />
+          </div>
+          {enhancedUrl ? (
             <div className="player-block">
               <h3>Enhanced Audio</h3>
               <audio controls src={enhancedUrl} ref={enhAudioRef} className="audio-player" />
               <Waveform audioRef={enhAudioRef} />
             </div>
-          </div>
-          <Link to="/" className="nav-button">Enhance Another</Link>
-        </>
-      ) : (
-        <p>Enhancing... please wait.</p>
+          ) : (
+            <p>Enhancing... please wait.</p>
+          )}
+        </div>
       )}
+      <Link to="/" className="nav-button">Enhance Another</Link>
     </div>
   );
 }

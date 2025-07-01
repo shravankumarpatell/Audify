@@ -14,7 +14,8 @@ app = FastAPI()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://audify-gql7.onrender.com/"],  # change in production to your frontend domain
+    allow_origins=["https://audify-gql7.onrender.com/",            # your deployed frontend
+    "https://audify-backend-ktwu.onrender.com"],  # change in production to your frontend domain
     allow_methods=["*"],
     allow_headers=["*"],
 )
