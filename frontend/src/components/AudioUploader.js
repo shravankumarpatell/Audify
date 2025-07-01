@@ -68,7 +68,7 @@ export default function AudioUploader() {
 
       {originalUrl && (
         <div className="players">
-          <h4>Original_Audio</h4>
+          <h4>{useSample ? 'Sample_Audio' : 'Your_Audio'}</h4>
           <audio controls src={originalUrl} className="audio-player" />
         </div>
       )}
