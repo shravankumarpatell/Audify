@@ -44,25 +44,27 @@ export default function EnhancedPage() {
   return (
     <div className="container">
       <h2 className="title">Enhanced Audio</h2>
-      {originalUrl && (
+
+      {!enhancedUrl ? (
+        <p>Enhancing... please wait.</p>
+      ) : (
         <div className="players">
           <div className="player-block">
             <h3>Original Audio</h3>
             <audio controls src={originalUrl} ref={origAudioRef} className="audio-player" />
             <Waveform audioRef={origAudioRef} />
           </div>
-          {enhancedUrl ? (
-            <div className="player-block">
-              <h3>Enhanced Audio</h3>
-              <audio controls src={enhancedUrl} ref={enhAudioRef} className="audio-player" />
-              <Waveform audioRef={enhAudioRef} />
-            </div>
-          ) : (
-            <p>Enhancing... please wait.</p>
-          )}
+          <div className="player-block">
+            <h3>Enhanced Audio</h3>
+            <audio controls src={enhancedUrl} ref={enhAudioRef} className="audio-player" />
+            <Waveform audioRef={enhAudioRef} />
+          </div>
         </div>
       )}
-      <Link to="/" className="nav-button">Enhance Another</Link>
+
+      {enhancedUrl && (
+        <Link to="/" className="nav-button">Enhance Another</Link>
+      )}
     </div>
   );
 }
