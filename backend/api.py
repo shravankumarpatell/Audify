@@ -15,7 +15,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://audify-gql7.onrender.com",  # frontend URL
+        "*",  # frontend URL
     ],
     allow_methods=["*"],
     allow_headers=["*"],
