@@ -56,14 +56,14 @@ def prepare_data(clean_path: str, noisy_path: str):
     return X_norm, Y_norm, mean, std
 
 
-# def train_model(clean_path: str, noisy_path: str, epochs: int = 10, batch_size: int = 32):
-    """
-    Train frame model on the given dataset.
-    Saves the trained model + stats before returning.
-    """
-    X, Y, mean, std = prepare_data(clean_path, noisy_path)
-    model = build_frame_model(X.shape[1])
-    history = model.fit(X, Y, epochs=epochs, batch_size=batch_size)
+#  def train_model(clean_path: str, noisy_path: str, epochs: int = 10, batch_size: int = 32):
+#     """
+#     Train frame model on the given dataset.
+#     Saves the trained model + stats before returning.
+#     """
+#     X, Y, mean, std = prepare_data(clean_path, noisy_path)
+#     model = build_frame_model(X.shape[1])
+#     history = model.fit(X, Y, epochs=epochs, batch_size=batch_size)
 
     # Plot training loss (optional)
     # plt.figure()
@@ -77,8 +77,8 @@ def prepare_data(clean_path: str, noisy_path: str):
     # plt.show()
 
     # Save trained artifacts
-    save_trained_model(model, mean, std)
-    return model, mean, std
+    # save_trained_model(model, mean, std)
+    # return model, mean, std
 
 
 def enhance_audio(model, noisy_file: str, mean: float, std: float,
