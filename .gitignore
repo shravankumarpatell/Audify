@@ -6,8 +6,8 @@ __pycache__/
 venv/
 .env/
 
-backend/models/frame_model.keras
-backend/models/norm_stats.json
+# backend/models/frame_model.keras
+# backend/models/norm_stats.json
 
 # Dataset & generated outputs
 dataset/

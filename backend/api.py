@@ -27,8 +27,8 @@ async def root():
 
 # Load model on startup
 model, mean, std = load_trained_model()
-if model is None:
-    raise RuntimeError("No trained model found! Run 'python backend/train.py'.")
+# if model is None:
+#     raise RuntimeError("No trained model found! Run 'python backend/train.py'.")
 
 @app.post("/enhance")
 async def enhance(file: UploadFile = File(...)):

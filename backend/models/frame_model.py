@@ -56,7 +56,7 @@ def prepare_data(clean_path: str, noisy_path: str):
     return X_norm, Y_norm, mean, std
 
 
-def train_model(clean_path: str, noisy_path: str, epochs: int = 10, batch_size: int = 32):
+# def train_model(clean_path: str, noisy_path: str, epochs: int = 10, batch_size: int = 32):
     """
     Train frame model on the given dataset.
     Saves the trained model + stats before returning.
@@ -66,15 +66,15 @@ def train_model(clean_path: str, noisy_path: str, epochs: int = 10, batch_size: 
     history = model.fit(X, Y, epochs=epochs, batch_size=batch_size)
 
     # Plot training loss (optional)
-    plt.figure()
-    plt.plot(history.history["loss"], label="Training Loss")
-    plt.title("Model Loss Over Epochs")
-    plt.xlabel("Epoch")
-    plt.ylabel("MSE Loss")
-    plt.grid(True)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    # plt.figure()
+    # plt.plot(history.history["loss"], label="Training Loss")
+    # plt.title("Model Loss Over Epochs")
+    # plt.xlabel("Epoch")
+    # plt.ylabel("MSE Loss")
+    # plt.grid(True)
+    # plt.legend()
+    # plt.tight_layout()
+    # plt.show()
 
     # Save trained artifacts
     save_trained_model(model, mean, std)
