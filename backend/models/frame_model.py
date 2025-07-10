@@ -1,6 +1,7 @@
 import os
 import io
 import json
+from flask import Flask, request, jsonify
 
 import numpy as np
 import librosa
@@ -17,8 +18,8 @@ from data.features import extract_features, butter_lowpass_filter, HOP_LENGTH, W
 from metrics.quality import segmental_snr, compute_pesq, compute_stoi
 
 # Paths for saving/loading
-MODEL_PATH = "backend/models/frame_model.keras"
-STATS_PATH = "backend/models/norm_stats.json"
+MODEL_PATH = "models/frame_model.keras"
+STATS_PATH = "models/norm_stats.json"
 
 
 def build_frame_model(input_dim: int) -> Sequential:
@@ -124,4 +125,4 @@ def load_trained_model():
         model = _load_model(MODEL_PATH)
         stats = json.load(open(STATS_PATH))
         return model, stats["mean"], stats["std"]
-    return None, None, None
+    return jsonify(success=False, error='Model not loaded.'), 500
