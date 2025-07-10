@@ -2,6 +2,7 @@
 let selectedFile = null;
 let processingId = null;
 let enhancedFilename = null;
+let displayedProgress = 0;
 const API_BASE = ''; // Empty string to use same origin as Flask server
 
 // Theme management
@@ -106,6 +107,8 @@ function formatDuration(seconds) {
 
 // Audio enhancement
 async function enhanceAudio() {
+    displayedProgress = 0;
+    updateProgress(0);
     if (!selectedFile) return;
 
     const enhanceBtn = document.getElementById('enhanceBtn');
@@ -214,10 +217,10 @@ function handleProcessingComplete(result) {
 
 function showMetrics(metrics) {
     const metricsGrid = document.getElementById('metricsGrid');
-//     if (!metricsGrid) {
-//     // nothing to do
-//     return;
-//   }
+    //     if (!metricsGrid) {
+    //     // nothing to do
+    //     return;
+    //   }
     metricsGrid.innerHTML = '';
 
     // Define metric display configurations
@@ -246,12 +249,39 @@ function showMetrics(metrics) {
     document.getElementById('metricsSection').style.display = 'block';
 }
 
-function updateProgress(progress) {
+function updateProgress(newProgress) {
     const progressFill = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
 
-    progressFill.style.width = `${progress}%`;
-    progressText.textContent = `Processing... ${progress}%`;
+    // If the new target is lower, just jump
+    if (newProgress <= displayedProgress) {
+        displayedProgress = newProgress;
+        progressFill.style.width = `${displayedProgress}%`;
+        progressText.textContent = `Processing... ${displayedProgress}%`;
+        return;
+    }
+
+    // Otherwise, animate a little at a time
+    const start = displayedProgress;
+    const end = newProgress;
+    const duration = 500;              // total ms to animate between steps
+    const stepTime = 20;               // update every 20ms
+    const steps = Math.ceil(duration / stepTime);
+    const delta = (end - start) / steps;
+    let current = start;
+    let count = 0;
+
+    const iv = setInterval(() => {
+        count++;
+        current += delta;
+        if (count >= steps) {
+            current = end;
+            clearInterval(iv);
+        }
+        displayedProgress = Math.round(current);
+        progressFill.style.width = `${displayedProgress}%`;
+        progressText.textContent = `Processing... ${displayedProgress}%`;
+    }, stepTime);
 }
 
 function showStatus(message, type) {

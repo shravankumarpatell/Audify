@@ -98,6 +98,10 @@ def process_audio(processing_id, input_path):
     """Background processing function"""
     try:
         # Update progress
+        for p in range(0, 25, 1):
+            update_progress(processing_id, p)
+            time.sleep(0.05)
+        
         update_progress(processing_id, 25)
         
         # Generate output filename
@@ -108,6 +112,10 @@ def process_audio(processing_id, input_path):
         output_buffer = io.BytesIO()
         
         # Update progress
+        for p in range(25, 50, 1):
+            update_progress(processing_id, p)
+            time.sleep(0.05)
+
         update_progress(processing_id, 50)
         
         # Enhance audio
@@ -116,8 +124,11 @@ def process_audio(processing_id, input_path):
                     output_buffer=output_buffer)
         
         # Update progress
-        update_progress(processing_id, 75)
+        for p in range(50, 99, 5):
+            update_progress(processing_id, p)
+            time.sleep(0.05)
         
+        update_progress(processing_id, 99)
         # Load original and enhanced audio for metrics
         original_audio, sr = sf.read(input_path)
         enhanced_audio, _ = sf.read(output_path)
@@ -125,10 +136,6 @@ def process_audio(processing_id, input_path):
         # Calculate quality metrics
         metrics = calculate_metrics(original_audio, enhanced_audio, sr)
         
-        # Update progress
-        update_progress(processing_id, 100)
-        
-        # Mark as completed
         with processing_lock:
             processing_status[processing_id] = {
                 'status': 'completed',

@@ -59,21 +59,6 @@ def print_startup_banner():
     print("💡 Press Ctrl+C to stop the server")
     print("="*60)
 
-def open_browser_delayed(url, delay=1):
-    """Open browser after a delay"""
-    def delayed_open():
-        time.sleep(delay)
-        try:
-            webbrowser.open(url)
-            print(f"🌐 Browser opened: {url}")
-        except Exception as e:
-            print(f"⚠️  Could not open browser: {e}")
-    
-    import threading
-    thread = threading.Thread(target=delayed_open)
-    thread.daemon = True
-    thread.start()
-
 def main():
     """Main function to start Audify"""
     try:
@@ -98,9 +83,6 @@ def main():
         # Print startup banner
         print_startup_banner()
         
-        # Ask about browser
-        open_browser = True
-        
         # Create necessary directories
         os.makedirs('temp', exist_ok=True)
         os.makedirs('outputs', exist_ok=True)
@@ -111,9 +93,6 @@ def main():
             sys.path.insert(0, os.path.join(os.getcwd(), 'backend'))
             from waitress import serve
             
-            # Open browser if requested
-            if open_browser:
-                open_browser_delayed('https://audify-vlol.onrender.com')
             
             print("\n🚀 Starting server...")
             serve(app, host='0.0.0.0', port=5000)
