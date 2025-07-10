@@ -127,32 +127,34 @@ async function enhanceAudio() {
             body: formData
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        console.log('Response:', response);
+
+        // if (!response.ok) {
+        //     throw new Error(`HTTP error! status: ${response.status}`);
+        // }
 
         const result = await response.json();
 
-        // if (result.success) {
-        //     console.log('Enhancement result:', result);
-        //     processingId = result.processing_id;
-        //     showStatus('Processing audio...', 'processing');
-
-        //     // Start polling for status
-        //     pollProcessingStatus();
-        // } else {
-        //     throw new Error(result.error || 'Upload failed');
-        // }
-
         if (result.success) {
-            // show the enhanced audio & metrics immediately here
-            const enhancedAudio = document.getElementById('enhancedAudio');
-            enhancedAudio.src = `/outputs/${result.output_filename}`;
-            showMetrics(result.metrics);
-            document.getElementById('resultsSection').style.display = 'block';
+            console.log('Enhancement result:', result);
+            processingId = result.processing_id;
+            showStatus('Processing audio...', 'processing');
+
+            // Start polling for status
+            pollProcessingStatus();
         } else {
-            throw new Error(result.error);
+            throw new Error(result.error || 'Upload failed');
         }
+
+        // if (result.success) {
+        //     // show the enhanced audio & metrics immediately here
+        //     const enhancedAudio = document.getElementById('enhancedAudio');
+        //     enhancedAudio.src = `/outputs/${result.output_filename}`;
+        //     showMetrics(result.metrics);
+        //     document.getElementById('resultsSection').style.display = 'block';
+        // } else {
+        //     throw new Error(result.error);
+        // }
 
     } catch (error) {
         console.error('Error:', error);
@@ -222,6 +224,10 @@ function handleProcessingComplete(result) {
 
 function showMetrics(metrics) {
     const metricsGrid = document.getElementById('metricsGrid');
+//     if (!metricsGrid) {
+//     // nothing to do
+//     return;
+//   }
     metricsGrid.innerHTML = '';
 
     // Define metric display configurations

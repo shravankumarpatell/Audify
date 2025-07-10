@@ -50,57 +50,102 @@ def health():
         "model_loaded": model is not None
     })
 
+# @app.route('/enhance', methods=['POST'])
+# def enhance():
+#     """Handle audio enhancement in a single request (synchronous)."""
+#     # 1) Validate
+#     if 'audio' not in request.files:
+#         return jsonify(success=False, error='No audio file provided'), 400
+#     if model is None:
+#         return jsonify(success=False, error='Model not loaded.'), 500
+
+#     file = request.files['audio']
+#     if file.filename == '':
+#         return jsonify(success=False, error='No file selected'), 400
+
+#     # 2) Save upload
+#     processing_id = str(uuid.uuid4())
+#     filename = secure_filename(file.filename)
+#     temp_path = os.path.join('temp', f"{processing_id}_{filename}")
+#     file.save(temp_path)
+
+#     try:
+#         # 3) Run enhancement inline
+#         output_filename = f"enhanced_{processing_id}.wav"
+#         output_path = os.path.join('outputs', output_filename)
+
+#         # (optional) you could still track progress here and stream it
+#         enhance_func(model, temp_path, mean, std,
+#                      output_path=output_path)
+
+#         # 4) Load for metrics
+#         original, sr1 = sf.read(temp_path)
+#         enhanced, sr2 = sf.read(output_path)
+#         # assert sr1 == sr2, "Sample rates differ"
+
+#         metrics = calculate_metrics(original, enhanced, sr1)
+
+#         # 5) Clean up temp file
+#         try: os.remove(temp_path)
+#         except: pass
+
+#         # 6) Return final result
+#         return jsonify({
+#             'success': True,
+#             'output_filename': output_filename,
+#             'metrics': metrics
+#         })
+
+#     except Exception as e:
+#         # On error, remove any partial output
+#         try: os.remove(output_path)
+#         except: pass
+#         return jsonify(success=False, error=str(e)), 500
+
+
 @app.route('/enhance', methods=['POST'])
 def enhance():
-    """Handle audio enhancement in a single request (synchronous)."""
-    # 1) Validate
+    """Start audio enhancement process"""
     if 'audio' not in request.files:
-        return jsonify(success=False, error='No audio file provided'), 400
+        return jsonify({'success': False, 'error': 'No audio file provided'}), 400
+    
     if model is None:
-        return jsonify(success=False, error='Model not loaded.'), 500
-
+        return jsonify({'success': False, 'error': 'Model not loaded. Please train the model first.'}), 500
+    
     file = request.files['audio']
     if file.filename == '':
-        return jsonify(success=False, error='No file selected'), 400
-
-    # 2) Save upload
-    processing_id = str(uuid.uuid4())
-    filename = secure_filename(file.filename)
-    temp_path = os.path.join('temp', f"{processing_id}_{filename}")
-    file.save(temp_path)
-
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+    
     try:
-        # 3) Run enhancement inline
-        output_filename = f"enhanced_{processing_id}.wav"
-        output_path = os.path.join('outputs', output_filename)
-
-        # (optional) you could still track progress here and stream it
-        enhance_func(model, temp_path, mean, std,
-                     output_path=output_path)
-
-        # 4) Load for metrics
-        original, sr1 = sf.read(temp_path)
-        enhanced, sr2 = sf.read(output_path)
-        assert sr1 == sr2, "Sample rates differ"
-
-        metrics = calculate_metrics(original, enhanced, sr1)
-
-        # 5) Clean up temp file
-        try: os.remove(temp_path)
-        except: pass
-
-        # 6) Return final result
+        # Generate unique processing ID
+        processing_id = str(uuid.uuid4())
+        
+        # Save uploaded file
+        filename = secure_filename(file.filename)
+        temp_path = os.path.join('temp', f"{processing_id}_{filename}")
+        file.save(temp_path)
+        
+        # Initialize processing status
+        with processing_lock:
+            processing_status[processing_id] = {
+                'status': 'processing',
+                'progress': 0,
+                'error': None,
+                'result': None
+            }
+        
+        # Start processing in background thread
+        thread = threading.Thread(target=process_audio, args=(processing_id, temp_path))
+        thread.daemon = True
+        thread.start()
+        
         return jsonify({
             'success': True,
-            'output_filename': output_filename,
-            'metrics': metrics
+            'processing_id': processing_id
         })
-
+        
     except Exception as e:
-        # On error, remove any partial output
-        try: os.remove(output_path)
-        except: pass
-        return jsonify(success=False, error=str(e)), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 def process_audio(processing_id, input_path):
     """Background processing function"""
