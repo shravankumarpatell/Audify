@@ -17,8 +17,8 @@ from data.features import extract_features, butter_lowpass_filter, HOP_LENGTH, W
 from metrics.quality import segmental_snr, compute_pesq, compute_stoi
 
 # Paths for saving/loading
-MODEL_PATH = "models/frame_model.keras"
-STATS_PATH = "models/norm_stats.json"
+MODEL_PATH = "backend/models/frame_model.keras"
+STATS_PATH = "backend/models/norm_stats.json"
 
 
 def build_frame_model(input_dim: int) -> Sequential:
