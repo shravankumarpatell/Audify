@@ -133,15 +133,25 @@ async function enhanceAudio() {
 
         const result = await response.json();
 
-        if (result.success) {
-            console.log('Enhancement result:', result);
-            processingId = result.processing_id;
-            showStatus('Processing audio...', 'processing');
+        // if (result.success) {
+        //     console.log('Enhancement result:', result);
+        //     processingId = result.processing_id;
+        //     showStatus('Processing audio...', 'processing');
 
-            // Start polling for status
-            pollProcessingStatus();
+        //     // Start polling for status
+        //     pollProcessingStatus();
+        // } else {
+        //     throw new Error(result.error || 'Upload failed');
+        // }
+
+        if (result.success) {
+            // show the enhanced audio & metrics immediately here
+            const enhancedAudio = document.getElementById('enhancedAudio');
+            enhancedAudio.src = `/outputs/${result.output_filename}`;
+            showMetrics(result.metrics);
+            document.getElementById('resultsSection').style.display = 'block';
         } else {
-            throw new Error(result.error || 'Upload failed');
+            throw new Error(result.error);
         }
 
     } catch (error) {
