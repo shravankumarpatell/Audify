@@ -1,6 +1,7 @@
 import os
 import io
 import json
+import time
 from flask import Flask, request, jsonify
 
 import numpy as np
@@ -76,15 +77,23 @@ def train_model(clean_path: str, noisy_path: str, epochs: int = 10, batch_size: 
 
 def enhance_audio(model, noisy_file: str, mean: float, std: float,
                   output_path: str = None,
-                  output_buffer: io.BytesIO = None):
+                  output_buffer: io.BytesIO = None,
+                  update_progress=None, processing_id=None):
     """
     Enhance a single noisy audio file, save output, and report metrics.
     """
+    for p in range(0, 10, 1):
+            update_progress(processing_id, p)
+            time.sleep(0.05)
+        
     feats, y_noisy, stft_noisy = extract_features(noisy_file)
     norm_feats = (feats - mean) / std
     pred = model.predict(norm_feats, verbose=0)
     pred = (pred * std) + mean
 
+    for p in range(10, 70, 1):
+            update_progress(processing_id, p)
+            time.sleep(0.05)
     # Reconstruct waveform
     mag = librosa.db_to_amplitude(pred.T)
     phase = np.angle(stft_noisy[:, :mag.shape[1]])
@@ -92,6 +101,9 @@ def enhance_audio(model, noisy_file: str, mean: float, std: float,
     enhanced = librosa.istft(enhanced_stft, hop_length=HOP_LENGTH, window=WINDOW_TYPE)
     enhanced = butter_lowpass_filter(enhanced, cutoff=4000, sr=SR)
 
+    for p in range(70, 80, 5):
+            update_progress(processing_id, p)
+            time.sleep(0.05)
     # Output to file or in-memory buffer
     if output_path:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -99,10 +111,16 @@ def enhance_audio(model, noisy_file: str, mean: float, std: float,
     if output_buffer is not None:
         sf.write(output_buffer, enhanced, SR, format="WAV")
 
+    for p in range(80, 99, 5):
+            update_progress(processing_id, p)
+            time.sleep(0.05)
     # Calculate and return metrics
     seg = segmental_snr(y_noisy, enhanced)
     p = compute_pesq(y_noisy, enhanced)
     s = compute_stoi(y_noisy, enhanced)
+
+    update_progress(processing_id, 99)
+    
     return seg, p, s
 
 

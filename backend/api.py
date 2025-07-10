@@ -97,13 +97,6 @@ def enhance():
 def process_audio(processing_id, input_path):
     """Background processing function"""
     try:
-        # Update progress
-        for p in range(0, 25, 1):
-            update_progress(processing_id, p)
-            time.sleep(0.05)
-        
-        update_progress(processing_id, 25)
-        
         # Generate output filename
         output_filename = f"enhanced_{processing_id}.wav"
         output_path = os.path.join('outputs', output_filename)
@@ -111,24 +104,12 @@ def process_audio(processing_id, input_path):
         # Create output buffer for metrics calculation
         output_buffer = io.BytesIO()
         
-        # Update progress
-        for p in range(25, 50, 1):
-            update_progress(processing_id, p)
-            time.sleep(0.05)
-
-        update_progress(processing_id, 50)
-        
         # Enhance audio
         enhance_func(model, input_path, mean, std, 
                     output_path=output_path, 
-                    output_buffer=output_buffer)
+                    output_buffer=output_buffer, update_progress=update_progress,
+                    processing_id=processing_id)
         
-        # Update progress
-        for p in range(50, 99, 5):
-            update_progress(processing_id, p)
-            time.sleep(0.05)
-        
-        update_progress(processing_id, 99)
         # Load original and enhanced audio for metrics
         original_audio, sr = sf.read(input_path)
         enhanced_audio, _ = sf.read(output_path)
