@@ -6,6 +6,11 @@ import uuid
 import threading
 import time
 import json
+import numpy as np
+from scipy import signal
+from pesq import pesq
+from pystoi import stoi
+import warnings
 from werkzeug.utils import secure_filename
 import soundfile as sf
 import numpy as np
@@ -157,23 +162,207 @@ def update_progress(processing_id, progress):
         if processing_id in processing_status:
             processing_status[processing_id]['progress'] = progress
 
-def calculate_metrics(original, enhanced, sr):
-    """Calculate quality metrics"""
+# def calculate_metrics(original, enhanced, sr):
+#     """Calculate quality metrics"""
+#     try:
+#         # Ensure same length
+#         min_len = min(len(original), len(enhanced))
+#         original = original[:min_len]
+#         enhanced = enhanced[:min_len]
+        
+#         # Calculate metrics
+#         seg_snr = segmental_snr(original, enhanced)
+#         pesq_score = compute_pesq(original, enhanced, sr)
+#         stoi_score = compute_stoi(original, enhanced, sr)
+        
+#         # Additional metrics
+#         snr = 10 * np.log10(np.mean(original**2) / np.mean((original - enhanced)**2 + 1e-10))
+#         signal_length = len(enhanced) / sr
+#         signal_rms = np.sqrt(np.mean(enhanced**2))
+        
+#         return {
+#             'segmental_snr': float(seg_snr),
+#             'pesq': float(pesq_score),
+#             'stoi': float(stoi_score),
+#             'snr': float(snr),
+#             'signal_length': float(signal_length),
+#             'signal_rms': float(signal_rms)
+#         }
+#     except Exception as e:
+#         print(f"[calculate_metrics] failed: {e}")
+#         return {
+#             'segmental_snr': 0.0,
+#             'pesq': 0.0,
+#             'stoi': 0.0,
+#             'snr': 0.0,
+#             'signal_length': 0.0,
+#             'signal_rms': 0.0
+#         }
+
+
+def segmental_snr(clean, enhanced, frame_len=160, overlap=0.5):
+    """
+    Calculate segmental SNR
+    """
     try:
-        # Ensure same length
-        min_len = min(len(original), len(enhanced))
-        original = original[:min_len]
-        enhanced = enhanced[:min_len]
+        hop_len = int(frame_len * (1 - overlap))
+        n_frames = (len(clean) - frame_len) // hop_len + 1
+        
+        snr_segments = []
+        for i in range(n_frames):
+            start = i * hop_len
+            end = start + frame_len
+            
+            clean_frame = clean[start:end]
+            enhanced_frame = enhanced[start:end]
+            
+            # Calculate noise as difference
+            noise = clean_frame - enhanced_frame
+            
+            # Calculate power
+            signal_power = np.mean(clean_frame ** 2)
+            noise_power = np.mean(noise ** 2)
+            
+            # Avoid division by zero
+            if noise_power > 1e-10 and signal_power > 1e-10:
+                snr_db = 10 * np.log10(signal_power / noise_power)
+                # Clip extreme values
+                snr_db = np.clip(snr_db, -10, 35)
+                snr_segments.append(snr_db)
+        
+        return np.mean(snr_segments) if snr_segments else 0.0
+    except Exception as e:
+        print(f"Segmental SNR calculation failed: {e}")
+        return 0.0
+
+def compute_pesq_safe(clean, enhanced, sr):
+    """
+    Safely compute PESQ with proper error handling
+    """
+    try:
+        # PESQ only works with 8kHz or 16kHz
+        if sr not in [8000, 16000]:
+            # Resample to 16kHz
+            target_sr = 16000
+            clean_resampled = signal.resample(clean, int(len(clean) * target_sr / sr))
+            enhanced_resampled = signal.resample(enhanced, int(len(enhanced) * target_sr / sr))
+        else:
+            clean_resampled = clean
+            enhanced_resampled = enhanced
+            target_sr = sr
+        
+        # Ensure minimum length (0.25 seconds)
+        min_samples = int(0.25 * target_sr)
+        if len(clean_resampled) < min_samples:
+            return 0.0
+        
+        # Normalize to prevent clipping
+        clean_resampled = clean_resampled / (np.max(np.abs(clean_resampled)) + 1e-10)
+        enhanced_resampled = enhanced_resampled / (np.max(np.abs(enhanced_resampled)) + 1e-10)
+        
+        # PESQ expects reference first, then degraded
+        score = pesq(target_sr, clean_resampled, enhanced_resampled, 'wb')
+        return score
+    except Exception as e:
+        print(f"PESQ calculation failed: {e}")
+        return 0.0
+
+def compute_stoi_safe(clean, enhanced, sr):
+    """
+    Safely compute STOI with proper error handling
+    """
+    try:
+        # Normalize signals
+        clean_norm = clean / (np.max(np.abs(clean)) + 1e-10)
+        enhanced_norm = enhanced / (np.max(np.abs(enhanced)) + 1e-10)
+        
+        score = stoi(clean_norm, enhanced_norm, sr, extended=False)
+        return score
+    except Exception as e:
+        print(f"STOI calculation failed: {e}")
+        return 0.0
+
+def align_signals(reference, test, max_delay=None):
+    """
+    Align two signals using cross-correlation
+    """
+    if max_delay is None:
+        max_delay = min(len(reference), len(test)) // 4
+    
+    # Compute cross-correlation
+    correlation = np.correlate(reference, test, mode='full')
+    
+    # Find the delay
+    delay = np.argmax(correlation) - len(test) + 1
+    delay = np.clip(delay, -max_delay, max_delay)
+    
+    # Align signals
+    if delay > 0:
+        # test is delayed
+        aligned_ref = reference[delay:]
+        aligned_test = test[:-delay] if delay < len(test) else test
+    elif delay < 0:
+        # reference is delayed
+        aligned_ref = reference[:delay]
+        aligned_test = test[-delay:]
+    else:
+        aligned_ref = reference
+        aligned_test = test
+    
+    # Ensure same length
+    min_len = min(len(aligned_ref), len(aligned_test))
+    return aligned_ref[:min_len], aligned_test[:min_len]
+
+def calculate_metrics(original, enhanced, sr, align_signals_flag=True):
+    """
+    Calculate comprehensive audio quality metrics
+    """
+    try:
+        # Validate inputs
+        if len(original) == 0 or len(enhanced) == 0:
+            raise ValueError("Empty audio signals")
+        
+        if sr <= 0:
+            raise ValueError("Invalid sample rate")
+        
+        # Convert to numpy arrays
+        original = np.array(original, dtype=np.float32)
+        enhanced = np.array(enhanced, dtype=np.float32)
+        
+        # Align signals if requested
+        if align_signals_flag:
+            original, enhanced = align_signals(original, enhanced)
+        else:
+            # Ensure same length
+            min_len = min(len(original), len(enhanced))
+            original = original[:min_len]
+            enhanced = enhanced[:min_len]
+        
+        # Check minimum length
+        if len(original) < sr * 0.1:  # At least 0.1 seconds
+            warnings.warn("Audio too short for reliable metrics")
         
         # Calculate metrics
         seg_snr = segmental_snr(original, enhanced)
-        pesq_score = compute_pesq(original, enhanced, sr)
-        stoi_score = compute_stoi(original, enhanced, sr)
+        pesq_score = compute_pesq_safe(original, enhanced, sr)
+        stoi_score = compute_stoi_safe(original, enhanced, sr)
+        
+        # Calculate SNR (improvement over original)
+        noise = original - enhanced
+        signal_power = np.mean(original ** 2)
+        noise_power = np.mean(noise ** 2)
+        
+        if noise_power > 1e-10:
+            snr = 10 * np.log10(signal_power / noise_power)
+        else:
+            snr = 60.0  # Very high SNR if no noise
         
         # Additional metrics
-        snr = 10 * np.log10(np.mean(original**2) / np.mean((original - enhanced)**2 + 1e-10))
         signal_length = len(enhanced) / sr
-        signal_rms = np.sqrt(np.mean(enhanced**2))
+        signal_rms = np.sqrt(np.mean(enhanced ** 2))
+        
+        # Calculate dynamic range
+        dynamic_range = 20 * np.log10(np.max(np.abs(enhanced)) / (signal_rms + 1e-10))
         
         return {
             'segmental_snr': float(seg_snr),
@@ -181,8 +370,10 @@ def calculate_metrics(original, enhanced, sr):
             'stoi': float(stoi_score),
             'snr': float(snr),
             'signal_length': float(signal_length),
-            'signal_rms': float(signal_rms)
+            'signal_rms': float(signal_rms),
+            'dynamic_range': float(dynamic_range)
         }
+        
     except Exception as e:
         print(f"[calculate_metrics] failed: {e}")
         return {
@@ -191,7 +382,8 @@ def calculate_metrics(original, enhanced, sr):
             'stoi': 0.0,
             'snr': 0.0,
             'signal_length': 0.0,
-            'signal_rms': 0.0
+            'signal_rms': 0.0,
+            'dynamic_range': 0.0
         }
 
 @app.route('/status/<processing_id>')
