@@ -12,7 +12,7 @@ function toggleTheme() {
 
     if (body.getAttribute('data-theme') === 'dark') {
         body.removeAttribute('data-theme');
-        themeIcon.textContent = '🌙';
+        themeIcon.textContent = '🌑';
         themeText.textContent = 'Dark Mode';
         localStorage.setItem('theme', 'light');
     } else {
@@ -129,9 +129,9 @@ async function enhanceAudio() {
 
         console.log('Response:', response);
 
-        // if (!response.ok) {
-        //     throw new Error(`HTTP error! status: ${response.status}`);
-        // }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
         const result = await response.json();
 
@@ -145,16 +145,6 @@ async function enhanceAudio() {
         } else {
             throw new Error(result.error || 'Upload failed');
         }
-
-        // if (result.success) {
-        //     // show the enhanced audio & metrics immediately here
-        //     const enhancedAudio = document.getElementById('enhancedAudio');
-        //     enhancedAudio.src = `/outputs/${result.output_filename}`;
-        //     showMetrics(result.metrics);
-        //     document.getElementById('resultsSection').style.display = 'block';
-        // } else {
-        //     throw new Error(result.error);
-        // }
 
     } catch (error) {
         console.error('Error:', error);

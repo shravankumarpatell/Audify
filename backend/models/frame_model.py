@@ -125,4 +125,4 @@ def load_trained_model():
         model = _load_model(MODEL_PATH)
         stats = json.load(open(STATS_PATH))
         return model, stats["mean"], stats["std"]
-    return jsonify(success=False, error='Path not found.'), 500
+    return None, None, None

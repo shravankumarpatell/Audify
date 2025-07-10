@@ -10,6 +10,10 @@ import time
 import socket
 from contextlib import closing
 
+# MAKE SURE this import pulls in your Flask `app` object:
+sys.path.insert(0, os.path.join(os.getcwd(), 'backend'))
+from app import app   # <- now `app` is in this module’s globals
+
 def check_model_availability():
     """Check if trained model and stats files exist"""
     model_path = "backend/models/frame_model.keras"
@@ -54,15 +58,6 @@ def print_startup_banner():
     print("📱 Server URL: http://localhost:5000")
     print("💡 Press Ctrl+C to stop the server")
     print("="*60)
-
-# def prompt_browser_open():
-#     """Ask user if they want to open browser"""
-#     try:
-#         response = input("\n🌐 Open browser automatically? (y/n): ").lower().strip()
-#         return response in ['y', 'yes', '']
-#     except KeyboardInterrupt:
-#         print("\nStarting server without browser...")
-#         return False
 
 def open_browser_delayed(url, delay=1):
     """Open browser after a delay"""
@@ -118,11 +113,11 @@ def main():
             
             # Open browser if requested
             if open_browser:
-                open_browser_delayed('http://localhost:5000')
+                open_browser_delayed('https://audify-vlol.onrender.com')
             
-            # Start Flask server
             print("\n🚀 Starting server...")
             app.run(host='0.0.0.0', port=5000, debug=False)
+            # Start Flask server
             
         except ImportError as e:
             print(f"❌ ERROR: Failed to import Flask app: {e}")

@@ -50,59 +50,6 @@ def health():
         "model_loaded": model is not None
     })
 
-# @app.route('/enhance', methods=['POST'])
-# def enhance():
-#     """Handle audio enhancement in a single request (synchronous)."""
-#     # 1) Validate
-#     if 'audio' not in request.files:
-#         return jsonify(success=False, error='No audio file provided'), 400
-#     if model is None:
-#         return jsonify(success=False, error='Model not loaded.'), 500
-
-#     file = request.files['audio']
-#     if file.filename == '':
-#         return jsonify(success=False, error='No file selected'), 400
-
-#     # 2) Save upload
-#     processing_id = str(uuid.uuid4())
-#     filename = secure_filename(file.filename)
-#     temp_path = os.path.join('temp', f"{processing_id}_{filename}")
-#     file.save(temp_path)
-
-#     try:
-#         # 3) Run enhancement inline
-#         output_filename = f"enhanced_{processing_id}.wav"
-#         output_path = os.path.join('outputs', output_filename)
-
-#         # (optional) you could still track progress here and stream it
-#         enhance_func(model, temp_path, mean, std,
-#                      output_path=output_path)
-
-#         # 4) Load for metrics
-#         original, sr1 = sf.read(temp_path)
-#         enhanced, sr2 = sf.read(output_path)
-#         # assert sr1 == sr2, "Sample rates differ"
-
-#         metrics = calculate_metrics(original, enhanced, sr1)
-
-#         # 5) Clean up temp file
-#         try: os.remove(temp_path)
-#         except: pass
-
-#         # 6) Return final result
-#         return jsonify({
-#             'success': True,
-#             'output_filename': output_filename,
-#             'metrics': metrics
-#         })
-
-#     except Exception as e:
-#         # On error, remove any partial output
-#         try: os.remove(output_path)
-#         except: pass
-#         return jsonify(success=False, error=str(e)), 500
-
-
 @app.route('/enhance', methods=['POST'])
 def enhance():
     """Start audio enhancement process"""
@@ -214,43 +161,6 @@ def update_progress(processing_id, progress):
     with processing_lock:
         if processing_id in processing_status:
             processing_status[processing_id]['progress'] = progress
-
-# def calculate_metrics(original, enhanced, sr):
-#     """Calculate quality metrics"""
-#     try:
-#         # Ensure same length
-#         min_len = min(len(original), len(enhanced))
-#         original = original[:min_len]
-#         enhanced = enhanced[:min_len]
-        
-#         # Calculate metrics
-#         seg_snr = segmental_snr(original, enhanced)
-#         pesq_score = compute_pesq(original, enhanced, sr)
-#         stoi_score = compute_stoi(original, enhanced, sr)
-        
-#         # Additional metrics
-#         snr = 10 * np.log10(np.mean(original**2) / np.mean((original - enhanced)**2 + 1e-10))
-#         signal_length = len(enhanced) / sr
-#         signal_rms = np.sqrt(np.mean(enhanced**2))
-        
-#         return {
-#             'segmental_snr': float(seg_snr),
-#             'pesq': float(pesq_score),
-#             'stoi': float(stoi_score),
-#             'snr': float(snr),
-#             'signal_length': float(signal_length),
-#             'signal_rms': float(signal_rms)
-#         }
-#     except Exception as e:
-#         print(f"[calculate_metrics] failed: {e}")
-#         return {
-#             'segmental_snr': 0.0,
-#             'pesq': 0.0,
-#             'stoi': 0.0,
-#             'snr': 0.0,
-#             'signal_length': 0.0,
-#             'signal_rms': 0.0
-#         }
 
 
 def segmental_snr(clean, enhanced, frame_len=160, overlap=0.5):
