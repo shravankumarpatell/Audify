@@ -1,0 +1,21 @@
+# Core dependencies
+flask==2.3.3
+flask-cors==4.0.0
+numpy==1.24.3
+librosa==0.10.1
+soundfile==0.12.1
+scipy==1.11.1
+
+# Audio processing and quality metrics
+pesq==0.0.4
+pystoi==0.3.3
+
+# Machine learning
+tensorflow==2.13.0
+
+# Utilities
+matplotlib==3.7.2
+werkzeug==2.3.7
+
+# Optional: for better performance
+numba==0.57.1
