@@ -109,14 +109,14 @@ def main():
         try:
     # Add backend to Python path
             sys.path.insert(0, os.path.join(os.getcwd(), 'backend'))
-            from app import app
+            from waitress import serve
             
             # Open browser if requested
             if open_browser:
                 open_browser_delayed('https://audify-vlol.onrender.com')
             
             print("\n🚀 Starting server...")
-            app.run(host='0.0.0.0', port=5000, debug=False)
+            serve(app, host='0.0.0.0', port=5000)
             # Start Flask server
             
         except ImportError as e:
