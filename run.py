@@ -12,7 +12,7 @@ from contextlib import closing
 
 # MAKE SURE this import pulls in your Flask `app` object:
 sys.path.insert(0, os.path.join(os.getcwd(), 'backend'))
-from app import app   # <- now `app` is in this module’s globals
+from api import app   # <- now `app` is in this module’s globals
 
 def check_model_availability():
     """Check if trained model and stats files exist"""
