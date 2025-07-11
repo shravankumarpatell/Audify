@@ -11,7 +11,8 @@ from flask_cors import CORS
 from api import app as api_app
 
 # Create main Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder='outputs', static_url_path='/outputs')
+
 CORS(app, resources={r"/*": {"origins": "https://audify-i66u.onrender.com"}})
 
 # Check if model exists on startup
