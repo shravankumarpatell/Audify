@@ -3,7 +3,7 @@ let selectedFile = null;
 let processingId = null;
 let enhancedFilename = null;
 let displayedProgress = 0;
-const API_BASE = ''; // Empty string to use same origin as Flask server
+const API_BASE = 'https://audify-vlol.onrender.com'; // Empty string to use same origin as Flask server
 
 // Theme management
 function toggleTheme() {
