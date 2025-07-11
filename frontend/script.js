@@ -190,7 +190,7 @@ function handleProcessingComplete(result) {
 
         // Show enhanced audio
         const enhancedAudio = document.getElementById('enhancedAudio');
-        enhancedAudio.src = `${API_BASE}/download/${enhancedFilename}`;
+        enhancedAudio.src = `${API_BASE}/outputs/${enhancedFilename}`;
         console.log('Enhanced audio URL:', enhancedAudio.src);
         document.getElementById('enhancedAudioSection').style.display = 'block';
 

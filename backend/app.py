@@ -50,7 +50,7 @@ try:
     from api import enhance, get_status, download_file
     app.add_url_rule('/enhance', 'enhance', enhance, methods=['POST'])
     app.add_url_rule('/status/<processing_id>', 'get_status', get_status, methods=['GET'])
-    app.add_url_rule('/download/<filename>', 'download_file', download_file, methods=['GET'])
+    app.add_url_rule('/outputs/<filename>', 'download_file', download_file, methods=['GET'])
 except ImportError as e:
     print(f"❌ Failed to import API routes: {e}")
     sys.exit(1)

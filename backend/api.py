@@ -342,7 +342,7 @@ def get_status(processing_id):
         else:
             return jsonify({'status': 'not_found'}), 404
 
-@app.route('/download/<filename>')
+@app.route('/outputs/<filename>')
 def download_file(filename):
     """Download enhanced audio file"""
     try:
