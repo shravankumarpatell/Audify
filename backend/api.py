@@ -22,7 +22,13 @@ from models.frame_model import (
 from metrics.quality import segmental_snr
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://audify-i66u.onrender.com"}})
+CORS(app, resources={
+    r"/*": {
+        "origins": ["https://audify-i66u.onrender.com", "https://audify-vlol.onrender.com", "http://localhost:3000", "http://localhost:5000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Global storage for processing status
 processing_status = {}
