@@ -33,7 +33,7 @@ from metrics.quality import segmental_snr
 app = Flask(__name__, static_folder='outputs', static_url_path='/outputs')
 CORS(app, resources={
     r"/*": {
-        "origins": ["https://audify-i66u.onrender.com", "https://audify-vlol.onrender.com", "http://localhost:3000", "http://localhost:5000"],
+        "origins": ["https://audify-i66u.onrender.com", "https://audify-ai.onrender.com", "http://localhost:3000", "http://localhost:5000"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
@@ -73,6 +73,16 @@ def not_found(error):
 def internal_error(error):
     """Handle 500 errors"""
     return jsonify({'error': 'Internal server error'}), 500
+
+# Import API routes
+try:
+    from api import enhance, get_status, download_file
+    app.add_url_rule('/enhance', 'enhance', enhance, methods=['POST'])
+    app.add_url_rule('/status/<processing_id>', 'get_status', get_status, methods=['GET'])
+    app.add_url_rule('/download/<filename>', 'download_file', download_file, methods=['GET'])
+except ImportError as e:
+    print(f"❌ Failed to import API routes: {e}")
+    sys.exit(1)
 
 @app.route('/enhance', methods=['POST'])
 def enhance():
@@ -370,7 +380,7 @@ def get_status(processing_id):
         else:
             return jsonify({'status': 'not_found'}), 404
 
-@app.route('/outputs/<filename>')
+@app.route('/download/<filename>')
 def download_file(filename):
     """Download enhanced audio file"""
     try:

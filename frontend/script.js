@@ -3,7 +3,7 @@ let selectedFile = null;
 let processingId = null;
 let enhancedFilename = null;
 let displayedProgress = 0;
-const API_BASE = 'https://audify-vlol.onrender.com'; // Empty string to use same origin as Flask server
+const API_BASE = 'https://audify-ai.onrender.com'; // Empty string to use same origin as Flask server
 
 // Theme management
 function toggleTheme() {
@@ -190,7 +190,7 @@ function handleProcessingComplete(result) {
 
         // Show enhanced audio
         const enhancedAudio = document.getElementById('enhancedAudio');
-        enhancedAudio.src = `${API_BASE}/outputs/${enhancedFilename}`;
+        enhancedAudio.src = `${API_BASE}/download/${enhancedFilename}`;
         console.log('Enhanced audio URL:', enhancedAudio.src);
         document.getElementById('enhancedAudioSection').style.display = 'block';
 
@@ -310,7 +310,7 @@ async function downloadEnhanced() {
     if (!enhancedFilename) return;
 
     try {
-        const response = await fetch(`${API_BASE}/outputs/${enhancedFilename}`);
+        const response = await fetch(`${API_BASE}/download/${enhancedFilename}`);
         console.log('Download response:', response);
         if (!response.ok) throw new Error('Download failed');
 
