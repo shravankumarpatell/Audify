@@ -346,8 +346,14 @@ def get_status(processing_id):
 def download_file(filename):
     """Download enhanced audio file"""
     try:
+        print(f"DEBUG: File requested: {filename}")  # DEBUG
+        file_path = os.path.join('outputs', filename)
+        print(f"DEBUG: Full file path: {file_path}")  # DEBUG
+        print(f"DEBUG: File exists: {os.path.exists(file_path)}")  # DEBUG
+        
         return send_from_directory('outputs', filename, as_attachment=False)
     except FileNotFoundError:
+        print(f"DEBUG: File not found: {filename}")  # DEBUG
         return jsonify({'error': 'File not found'}), 404
 
 if __name__ == '__main__':
