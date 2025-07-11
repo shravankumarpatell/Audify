@@ -1,21 +1,25 @@
 """
 Main Flask application server for Audify.
-Serves both API endpoints and static HTML frontend.
+Production-ready API server for audio enhancement.
 """
 import os
 import sys
-from flask import Flask, render_template, jsonify
+from flask import Flask, jsonify
+from flask_cors import CORS
 
-
-
-# Import the API blueprint from api.py
-from api import app as api_app
+# Import API functions
+from api import enhance, get_status, download_file, processing_status, processing_lock
 
 # Create main Flask app
-app = Flask(__name__, 
-            static_folder='../', 
-            static_url_path='/',
-            template_folder='../')
+app = Flask(__name__)
+
+# Enable CORS for all routes
+CORS(app, origins=[
+    "http://localhost:3000",  # Local development
+    "http://localhost:8080",  # Local preview
+    "https://your-frontend-domain.com",  # Replace with your frontend domain
+    # Add more allowed origins as needed
+])
 
 # Check if model exists on startup
 MODEL_PATH = "backend/models/frame_model.keras"
@@ -24,11 +28,6 @@ STATS_PATH = "backend/models/norm_stats.json"
 def check_model_availability():
     """Check if trained model exists"""
     return os.path.exists(MODEL_PATH) and os.path.exists(STATS_PATH)
-
-@app.route('/')
-def index():
-    """Serve the main HTML page"""
-    return render_template('index.html')
 
 @app.route('/health')
 def health():
@@ -41,7 +40,15 @@ def health():
         "stats_path": STATS_PATH
     })
 
-# Register API routes from api.py
+@app.route('/api/info')
+def api_info():
+    """API information endpoint"""
+    return jsonify({
+        "name": "Audify API",
+        "version": "1.0.0",
+        "description": "AI Speech Enhancement API"
+    })
+
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors"""
@@ -52,15 +59,10 @@ def internal_error(error):
     """Handle 500 errors"""
     return jsonify({'error': 'Internal server error'}), 500
 
-# Import API routes
-try:
-    from api import enhance, get_status, download_file
-    app.add_url_rule('/enhance', 'enhance', enhance, methods=['POST'])
-    app.add_url_rule('/status/<processing_id>', 'get_status', get_status, methods=['GET'])
-    app.add_url_rule('/download/<filename>', 'download_file', download_file, methods=['GET'])
-except ImportError as e:
-    print(f"❌ Failed to import API routes: {e}")
-    sys.exit(1)
+# Register API routes
+app.add_url_rule('/enhance', 'enhance', enhance, methods=['POST'])
+app.add_url_rule('/status/<processing_id>', 'get_status', get_status, methods=['GET'])
+app.add_url_rule('/outputs/<filename>', 'download_file', download_file, methods=['GET'])
 
 if __name__ == '__main__':
     # Check model availability on startup
@@ -72,11 +74,11 @@ if __name__ == '__main__':
         print(f"  - {STATS_PATH}")
         sys.exit(1)
     
-    print("🚀 Starting Audify server...")
-    print("📱 Open http://localhost:5000 in your browser")
+    print("🚀 Starting Audify API server...")
+    print("🔗 API available at http://localhost:5000")
+    print("📋 Health check: http://localhost:5000/health")
     
     # Create necessary directories
     os.makedirs('temp', exist_ok=True)
-    os.makedirs('/outputs', exist_ok=True)
+    os.makedirs('outputs', exist_ok=True)
     
-    app.run(host='0.0.0.0', port=5000, debug=False)

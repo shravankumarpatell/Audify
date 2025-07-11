@@ -1,9 +1,23 @@
+// Configuration - Update this with your backend URL
+const CONFIG = {
+    // For development: 'http://localhost:5000'
+    // For production: 'https://your-backend-domain.com'
+    API_BASE_URL: window.location.hostname === 'localhost' 
+        ? 'http://localhost:5000' 
+        : 'https://audify-vlol.onrender.com',
+    
+    // Maximum file size (30MB)
+    MAX_FILE_SIZE: 30 * 1024 * 1024,
+    
+    // Supported file types
+    SUPPORTED_TYPES: ['audio/wav', 'audio/mpeg', 'audio/flac', 'audio/ogg', 'audio/mp4']
+};
+
 // Global variables
 let selectedFile = null;
 let processingId = null;
 let enhancedFilename = null;
 let displayedProgress = 0;
-const API_BASE = 'https://audify-vlol.onrender.com'; // Empty string to use same origin as Flask server
 
 // Theme management
 function toggleTheme() {
@@ -40,6 +54,7 @@ function initFileUpload() {
     const fileInput = document.getElementById('fileInput');
 
     fileInput.addEventListener('click', e => e.stopPropagation());
+    
     // Click to upload
     uploadArea.addEventListener('click', () => fileInput.click());
 
@@ -68,7 +83,19 @@ function initFileUpload() {
 
 function handleFileSelect(event) {
     const file = event.target.files[0];
-    // if (!file) return;
+    if (!file) return;
+
+    // Validate file type
+    if (!CONFIG.SUPPORTED_TYPES.includes(file.type) && !file.name.match(/\.(wav|mp3|flac|ogg|m4a)$/i)) {
+        showStatus('Unsupported file type. Please upload WAV, MP3, FLAC, OGG, or M4A files.', 'error');
+        return;
+    }
+
+    // Validate file size
+    if (file.size > CONFIG.MAX_FILE_SIZE) {
+        showStatus('File too large. Please upload files smaller than 30MB.', 'error');
+        return;
+    }
 
     selectedFile = file;
 
@@ -89,6 +116,9 @@ function handleFileSelect(event) {
     originalAudio.addEventListener('loadedmetadata', () => {
         document.getElementById('originalDuration').textContent = formatDuration(originalAudio.duration);
     });
+
+    // Clear any previous status messages
+    document.getElementById('statusMessage').style.display = 'none';
 }
 
 function formatFileSize(bytes) {
@@ -109,11 +139,14 @@ function formatDuration(seconds) {
 async function enhanceAudio() {
     displayedProgress = 0;
     updateProgress(0);
-    if (!selectedFile) return;
+    
+    if (!selectedFile) {
+        showStatus('Please select an audio file first.', 'error');
+        return;
+    }
 
     const enhanceBtn = document.getElementById('enhanceBtn');
     const progressContainer = document.getElementById('progressContainer');
-    const statusMessage = document.getElementById('statusMessage');
 
     // Disable button and show progress
     enhanceBtn.disabled = true;
@@ -125,21 +158,24 @@ async function enhanceAudio() {
         const formData = new FormData();
         formData.append('audio', selectedFile);
 
-        const response = await fetch(`${API_BASE}/enhance`, {
+        showStatus('Uploading file...', 'processing');
+
+        const response = await fetch(`${CONFIG.API_BASE_URL}/enhance`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                // Don't set Content-Type header - let browser set it with boundary for FormData
+            }
         });
 
-        console.log('Response:', response);
-
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Server error: ${response.status}`);
         }
 
         const result = await response.json();
 
         if (result.success) {
-            console.log('Enhancement result:', result);
             processingId = result.processing_id;
             showStatus('Processing audio...', 'processing');
 
@@ -150,8 +186,14 @@ async function enhanceAudio() {
         }
 
     } catch (error) {
-        console.error('Error:', error);
-        showStatus(`Error: ${error.message}`, 'error');
+        console.error('Enhancement error:', error);
+        
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            showStatus('Unable to connect to the server. Please check your internet connection and try again.', 'error');
+        } else {
+            showStatus(`Error: ${error.message}`, 'error');
+        }
+        
         resetUI();
     }
 }
@@ -160,37 +202,42 @@ async function pollProcessingStatus() {
     if (!processingId) return;
 
     try {
-        const response = await fetch(`${API_BASE}/status/${processingId}`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/status/${processingId}`);
+        
+        if (!response.ok) {
+            throw new Error(`Status check failed: ${response.status}`);
+        }
+
         const status = await response.json();
 
         if (status.status === 'completed') {
-            console.log('Processing completed:', status);
             handleProcessingComplete(status.result);
         } else if (status.status === 'error') {
             throw new Error(status.error || 'Processing failed');
+        } else if (status.status === 'not_found') {
+            throw new Error('Processing session not found');
         } else {
             // Update progress
-            updateProgress(status.progress);
+            updateProgress(status.progress || 0);
 
             // Continue polling
             setTimeout(pollProcessingStatus, 1000);
         }
 
     } catch (error) {
-        console.error('Error polling status:', error);
+        console.error('Status polling error:', error);
         showStatus(`Error: ${error.message}`, 'error');
         resetUI();
     }
 }
 
 function handleProcessingComplete(result) {
-    console.log('Processing result:', result);
-    if (result.success) {
+    if (result && result.success) {
         enhancedFilename = result.output_filename;
 
         // Show enhanced audio
         const enhancedAudio = document.getElementById('enhancedAudio');
-        enhancedAudio.src = `${API_BASE}/outputs/${enhancedFilename}`;
+        enhancedAudio.src = `${CONFIG.API_BASE_URL}/outputs/${enhancedFilename}`;
         document.getElementById('enhancedAudioSection').style.display = 'block';
 
         // Update duration when loaded
@@ -198,18 +245,17 @@ function handleProcessingComplete(result) {
             document.getElementById('enhancedDuration').textContent = formatDuration(enhancedAudio.duration);
         });
 
-        // Show metrics
-        // if (result.metrics) {
-        //     showMetrics(result.metrics);
-        // }
+        // Show metrics if available
+        if (result.metrics) {
+            showMetrics(result.metrics);
+        }
 
         document.getElementById('resultsSection').style.display = 'block';
-
         showStatus('Enhancement completed successfully!', 'success');
         updateProgress(100);
 
     } else {
-        throw new Error(result.error || 'Enhancement failed');
+        throw new Error(result?.error || 'Enhancement failed');
     }
 
     resetUI();
@@ -217,10 +263,8 @@ function handleProcessingComplete(result) {
 
 function showMetrics(metrics) {
     const metricsGrid = document.getElementById('metricsGrid');
-    //     if (!metricsGrid) {
-    //     // nothing to do
-    //     return;
-    //   }
+    if (!metricsGrid) return;
+    
     metricsGrid.innerHTML = '';
 
     // Define metric display configurations
@@ -234,14 +278,14 @@ function showMetrics(metrics) {
     };
 
     Object.entries(metrics).forEach(([key, value]) => {
-        if (metricConfigs[key]) {
+        if (metricConfigs[key] && typeof value === 'number') {
             const config = metricConfigs[key];
             const metricCard = document.createElement('div');
             metricCard.className = 'metric-card';
             metricCard.innerHTML = `
-                        <div class="metric-value">${value.toFixed(config.decimals)}${config.unit}</div>
-                        <div class="metric-label">${config.label}</div>
-                    `;
+                <div class="metric-value">${value.toFixed(config.decimals)}${config.unit}</div>
+                <div class="metric-label">${config.label}</div>
+            `;
             metricsGrid.appendChild(metricCard);
         }
     });
@@ -253,6 +297,9 @@ function updateProgress(newProgress) {
     const progressFill = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
 
+    // Ensure progress is within bounds
+    newProgress = Math.max(0, Math.min(100, newProgress));
+
     // If the new target is lower, just jump
     if (newProgress <= displayedProgress) {
         displayedProgress = newProgress;
@@ -261,22 +308,22 @@ function updateProgress(newProgress) {
         return;
     }
 
-    // Otherwise, animate a little at a time
+    // Otherwise, animate smoothly
     const start = displayedProgress;
     const end = newProgress;
-    const duration = 500;              // total ms to animate between steps
-    const stepTime = 20;               // update every 20ms
+    const duration = 500;
+    const stepTime = 20;
     const steps = Math.ceil(duration / stepTime);
     const delta = (end - start) / steps;
     let current = start;
     let count = 0;
 
-    const iv = setInterval(() => {
+    const interval = setInterval(() => {
         count++;
         current += delta;
         if (count >= steps) {
             current = end;
-            clearInterval(iv);
+            clearInterval(interval);
         }
         displayedProgress = Math.round(current);
         progressFill.style.width = `${displayedProgress}%`;
@@ -291,10 +338,6 @@ function showStatus(message, type) {
     statusMessage.style.display = 'block';
 }
 
-// const player = new Plyr('#player', {
-//       controls: ['play', 'progress', 'current-time', 'mute', 'volume']
-//     });
-
 function resetUI() {
     const enhanceBtn = document.getElementById('enhanceBtn');
     enhanceBtn.disabled = false;
@@ -306,12 +349,17 @@ function resetUI() {
 }
 
 async function downloadEnhanced() {
-    if (!enhancedFilename) return;
+    if (!enhancedFilename) {
+        showStatus('No enhanced audio available for download.', 'error');
+        return;
+    }
 
     try {
-        const response = await fetch(`${API_BASE}/outputs/${enhancedFilename}`);
-        console.log('Download response:', response);
-        if (!response.ok) throw new Error('Download failed');
+        const response = await fetch(`${CONFIG.API_BASE_URL}/outputs/${enhancedFilename}`);
+        
+        if (!response.ok) {
+            throw new Error('Download failed');
+        }
 
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -323,9 +371,37 @@ async function downloadEnhanced() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
+        showStatus('Download completed successfully!', 'success');
+
     } catch (error) {
         console.error('Download error:', error);
         showStatus('Download failed. Please try again.', 'error');
+    }
+}
+
+// API health check
+async function checkAPIHealth() {
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/health`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API Health Check:', data);
+            
+            if (!data.model_loaded) {
+                showStatus('Backend model not loaded. Please ensure the AI model is properly trained and available.', 'error');
+            }
+        } else {
+            throw new Error(`Health check failed: ${response.status}`);
+        }
+    } catch (error) {
+        console.error('API Health Check Error:', error);
+        showStatus('Unable to connect to the enhancement server. Please check if the backend is running.', 'error');
     }
 }
 
@@ -333,15 +409,10 @@ async function downloadEnhanced() {
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initFileUpload();
-
-    // Test API connection
-    fetch(`${API_BASE}/health`)
-        .then(response => response.json())
-        .then(data => {
-            console.log('API connected:', data);
-        })
-        .catch(error => {
-            console.error('API connection error:', error);
-            showStatus('Unable to connect to the enhancement server. Please ensure the backend is running.', 'error');
-        });
+    
+    // Check API health
+    checkAPIHealth();
+    
+    console.log('Audify Frontend Initialized');
+    console.log('API Base URL:', CONFIG.API_BASE_URL);
 });

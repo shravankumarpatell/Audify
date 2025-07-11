@@ -1,0 +1,16 @@
+{
+  "name": "audify-frontend",
+  "version": "1.0.0",
+  "description": "Audify AI Speech Enhancement - Frontend",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "build": "echo 'Frontend build complete - static files ready'",
+    "preview": "python -m http.server 8080"
+  },
+  "keywords": ["audio", "ai", "speech-enhancement", "frontend"],
+  "author": "Audify Team",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}
