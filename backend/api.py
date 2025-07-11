@@ -21,7 +21,7 @@ from models.frame_model import (
 )
 from metrics.quality import segmental_snr, compute_pesq, compute_stoi
 
-app = Flask(__name__, static_folder='../outputs', static_url_path='/outputs')
+app = Flask(__name__)
 CORS(app)
 
 # Global storage for processing status

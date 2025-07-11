@@ -12,10 +12,7 @@ from flask import Flask, render_template, jsonify
 from api import app as api_app
 
 # Create main Flask app
-app = Flask(__name__, 
-            static_folder='../', 
-            static_url_path='/',
-            template_folder='../')
+app = Flask(__name__)
 
 # Check if model exists on startup
 MODEL_PATH = "backend/models/frame_model.keras"
@@ -25,10 +22,10 @@ def check_model_availability():
     """Check if trained model exists"""
     return os.path.exists(MODEL_PATH) and os.path.exists(STATS_PATH)
 
-@app.route('/')
-def index():
-    """Serve the main HTML page"""
-    return render_template('index.html')
+# @app.route('/')
+# def index():
+#     """Serve the main HTML page"""
+#     return render_template('index.html')
 
 @app.route('/health')
 def health():
