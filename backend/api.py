@@ -19,7 +19,7 @@ from models.frame_model import (
     load_trained_model,
     enhance_audio as enhance_func
 )
-from metrics.quality import segmental_snr, compute_pesq, compute_stoi
+from metrics.quality import segmental_snr
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://audify-i66u.onrender.com"}})
@@ -37,10 +37,6 @@ if model is None:
 os.makedirs('temp', exist_ok=True)
 os.makedirs('outputs', exist_ok=True)
 
-@app.route('/')
-def index():
-    """Serve the main HTML page"""
-    return send_from_directory('../', 'index.html')
 
 @app.route('/health')
 def health():

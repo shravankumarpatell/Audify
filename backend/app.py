@@ -4,7 +4,7 @@ Serves both API endpoints and static HTML frontend.
 """
 import os
 import sys
-from flask import Flask, render_template, jsonify
+from flask import Flask, jsonify
 from flask_cors import CORS
 
 # Import the API blueprint from api.py
