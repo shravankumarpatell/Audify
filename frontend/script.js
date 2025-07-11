@@ -311,6 +311,7 @@ async function downloadEnhanced() {
 
     try {
         const response = await fetch(`${API_BASE}/outputs/${enhancedFilename}`);
+        console.log('Download response:', response);
         if (!response.ok) throw new Error('Download failed');
 
         const blob = await response.blob();
