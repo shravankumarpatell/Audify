@@ -22,7 +22,7 @@ from models.frame_model import (
 from metrics.quality import segmental_snr, compute_pesq, compute_stoi
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "https://audify-i66u.onrender.com"}})
 
 # Global storage for processing status
 processing_status = {}
