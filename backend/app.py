@@ -13,7 +13,13 @@ from api import app as api_app
 # Create main Flask app
 app = Flask(__name__, static_folder='outputs', static_url_path='/outputs')
 
-# CORS(app, resources={r"/*": {"origins": "https://audify-i66u.onrender.com"}})
+CORS(app, resources={
+    r"/*": {
+        "origins": ["https://audify-i66u.onrender.com", "https://audify-vlol.onrender.com", "http://localhost:3000", "http://localhost:5000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Check if model exists on startup
 MODEL_PATH = "backend/models/frame_model.keras"
