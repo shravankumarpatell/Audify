@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Main launcher script for Audify AI Speech Enhancement.
 Checks model availability and starts the Flask server.
@@ -12,7 +11,7 @@ from contextlib import closing
 
 # MAKE SURE this import pulls in your Flask `app` object:
 sys.path.insert(0, os.path.join(os.getcwd(), 'backend'))
-from api import app   # <- now `app` is in this module’s globals
+from app import app   # <- now `app` is in this module’s globals
 
 def check_model_availability():
     """Check if trained model and stats files exist"""
