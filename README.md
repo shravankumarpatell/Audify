@@ -7,7 +7,7 @@
 
 A powerful web-based AI speech enhancement tool that transforms noisy audio recordings into crystal-clear speech using deep learning. Built with TensorFlow and Flask, Audify provides real-time audio processing with comprehensive quality metrics.
 
-![Audify Demo](demo.gif) <!-- Add your demo gif here -->
+Project Link: [Audify](https://audify-vlol.onrender.com)
 
 ## Features
 
@@ -32,7 +32,7 @@ A powerful web-based AI speech enhancement tool that transforms noisy audio reco
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/[your-username]/audify.git
+   git clone https://github.com/[shravankumarpatell]/audify.git
    cd audify
    ```
 
@@ -291,7 +291,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **[Shravan kumar]** - [shravankumarpatelofficial@gmail.com]
 
-Project Link: [Audify](https://audify-vlol.onrender.com)
 
 ---
 
