@@ -7,7 +7,7 @@
 
 A powerful web-based AI speech enhancement tool that transforms noisy audio recordings into crystal-clear speech using deep learning. Built with TensorFlow and Flask, Audify provides real-time audio processing with comprehensive quality metrics.
 
-Project Link: [Audify](https://audify-vlol.onrender.com)
+Project Link: [Audify](https://audify-vlol.onrnder.com)
 
 ## Features
 
@@ -32,7 +32,7 @@ Project Link: [Audify](https://audify-vlol.onrender.com)
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/[shravankumarpatell]/audify.git
+   git clone https://github.com/[your-username]/audify.git
    cd audify
    ```
 
@@ -59,7 +59,7 @@ Project Link: [Audify](https://audify-vlol.onrender.com)
 
 5. **Start the application**
    ```bash
-   python backend/app.py
+   python run.py
    ```
 
 6. **Access the application**
@@ -101,6 +101,14 @@ Project Link: [Audify](https://audify-vlol.onrender.com)
 
 ```
 audify/
+├── .gitignore              # Git ignore rules
+├── Dockerfile              # Docker container configuration
+├── README.md               # Project documentation
+├── requirements.txt        # Python dependencies
+├── run.py                  # Application entry point
+├── index.html              # Frontend HTML
+├── script.js               # Frontend JavaScript
+├── style.css               # Frontend styling
 ├── backend/
 │   ├── api.py              # Flask API endpoints
 │   ├── app.py              # Main Flask application
@@ -110,16 +118,12 @@ audify/
 │   ├── metrics/
 │   │   └── quality.py      # Quality evaluation metrics
 │   └── models/
-│       └── frame_model.py  # Neural network model
-├── dataset/
-│   ├── clean/              # Clean audio files
-│   └── noisy/              # Noisy audio files
-├── temp/                   # Temporary upload storage
-├── outputs/                # Enhanced audio outputs
-├── index.html              # Frontend HTML
-├── script.js               # Frontend JavaScript
-├── style.css               # Frontend styling
-└── requirements.txt        # Python dependencies
+│       ├── frame_model.py  # Neural network model
+│       ├── frame_model.keras  # Trained model file
+│       └── norm_stats.json    # Normalization statistics
+└── models/
+    ├── frame_model.keras   # Backup trained model
+    └── norm_stats.json     # Backup normalization stats
 ```
 
 ## API Reference
@@ -207,7 +211,7 @@ python backend/train.py
 ```bash
 # Enable debug mode
 export FLASK_ENV=development
-python backend/app.py
+python run.py
 ```
 
 ### Adding New Features
@@ -243,7 +247,7 @@ pystoi>=0.3.3
 ### Local Deployment
 
 ```bash
-python backend/app.py
+python run.py
 ```
 
 ### Docker Deployment
@@ -256,7 +260,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY . .
 EXPOSE 5000
-CMD ["python", "backend/app.py"]
+CMD ["python", "run.py"]
 ```
 
 ### Cloud Deployment
@@ -289,8 +293,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-**[Shravan kumar]** - [shravankumarpatelofficial@gmail.com]
-
+**[Email]** - [shravankumarpatelofficial@example.com]
 
 ---
 
